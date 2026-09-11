@@ -33,43 +33,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var progressBar: ProgressBar
 
     private val MAIN_URL = "https://tinyurl.com/n8bookapp"
-
-    // ========== TOP / BOTTOM BANNER AD HTML ==========
-    private val TOP_BOTTOM_AD_HTML = """
-        <html><head><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-        <body style="margin:0;padding:0;background:#000;text-align:center;">
-        <script type="text/javascript">
-          atOptions = {
-            'key' : '1a18685901d53a3d5e5cf3133a741720',
-            'format' : 'iframe',
-            'height' : 50,
-            'width' : 320,
-            'params' : {}
-          };
-        </script>
-        <script type="text/javascript" src="https://www.highrevenueformat.com/1a18685901d53a3d5e5cf3133a741720/invoke.js"></script>
-        </body></html>
-    """.trimIndent()
-
-    // ========== INTERSTITIAL AD HTML ==========
-    private val INTERSTITIAL_AD_HTML = """
-        <html><head><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-        <body style="margin:0;padding:0;background:#000;text-align:center;">
-        <script type="text/javascript">
-          atOptions = {
-            'key' : '11ea1da7ef873008efa0608896c205d1',
-            'format' : 'iframe',
-            'height' : 250,
-            'width' : 300,
-            'params' : {}
-          };
-        </script>
-        <script type="text/javascript" src="https://www.highrevenueformat.com/11ea1da7ef873008efa0608896c205d1/invoke.js"></script>
-        <br>
-        <script async="async" data-cfasync="false" src="https://pl31294846.profitableratecpmnetwork.com/728631dcfb6c64ad8c745c49929b9d2e/invoke.js"></script>
-        <div id="container-728631dcfb6c64ad8c745c49929b9d2e"></div>
-        </body></html>
-    """.trimIndent()
+    private val BANNER_AD_URL = "https://nightbooksapp.blogspot.com/p/app-banner-ads.html"
+    private val INTERSTITIAL_AD_URL = "https://nightbooksapp.blogspot.com/p/app-interstitial.html"
 
     private var interstitialTimer: Timer? = null
 
@@ -162,11 +127,33 @@ class MainActivity : AppCompatActivity() {
 
     @SuppressLint("SetJavaScriptEnabled")
     private fun setupAds() {
+        // Top and Bottom banners - both load the same Blogger URL
         listOf(topAdWebView, bottomAdWebView).forEach { wv ->
             wv.settings.javaScriptEnabled = true
             wv.settings.domStorageEnabled = true
+            wv.settings.loadsImagesAutomatically = true
+            wv.settings.blockNetworkImage = false
+            wv.settings.cacheMode = WebSettings.LOAD_NO_CACHE
+            wv.settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+            wv.settings.mediaPlaybackRequiresUserGesture = false
+            wv.settings.userAgentString = wv.settings.userAgentString + " BooksLabApp/1.0"
             wv.setBackgroundColor(Color.BLACK)
-            wv.loadDataWithBaseURL(null, TOP_BOTTOM_AD_HTML, "text/html", "UTF-8", null)
+            
+            // Accept third party cookies for ads
+            CookieManager.getInstance().setAcceptThirdPartyCookies(wv, true)
+            
+            wv.webViewClient = object : WebViewClient() {
+                override fun shouldOverrideUrlLoading(
+                    view: WebView?,
+                    request: WebResourceRequest?
+                ): Boolean {
+                    view?.loadUrl(request?.url.toString())
+                    return true
+                }
+            }
+            
+            // Load from Blogger URL (uses referer automatically)
+            wv.loadUrl(BANNER_AD_URL)
         }
     }
 
@@ -189,7 +176,7 @@ class MainActivity : AppCompatActivity() {
             override fun run() {
                 runOnUiThread { showInterstitialAd() }
             }
-        }, 180000, 180000) // 3 منٹ = 180,000 ms
+        }, 180000, 180000) // 3 minutes
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -201,15 +188,24 @@ class MainActivity : AppCompatActivity() {
         val wv = WebView(this)
         wv.settings.javaScriptEnabled = true
         wv.settings.domStorageEnabled = true
+        wv.settings.loadsImagesAutomatically = true
+        wv.settings.blockNetworkImage = false
+        wv.settings.cacheMode = WebSettings.LOAD_NO_CACHE
+        wv.settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+        wv.settings.mediaPlaybackRequiresUserGesture = false
+        wv.settings.userAgentString = wv.settings.userAgentString + " BooksLabApp/1.0"
         wv.setBackgroundColor(Color.BLACK)
-        wv.loadDataWithBaseURL(null, INTERSTITIAL_AD_HTML, "text/html", "UTF-8", null)
+        
+        CookieManager.getInstance().setAcceptThirdPartyCookies(wv, true)
+        
+        wv.loadUrl(INTERSTITIAL_AD_URL)
 
         dialog.setView(wv)
         dialog.show()
 
         Handler(Looper.getMainLooper()).postDelayed({
             if (dialog.isShowing) dialog.dismiss()
-        }, 6000) // 6 سیکنڈ
+        }, 6000)
     }
 
     private fun isOnline(): Boolean {
