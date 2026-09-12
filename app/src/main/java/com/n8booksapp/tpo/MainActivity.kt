@@ -33,8 +33,75 @@ class MainActivity : AppCompatActivity() {
     private lateinit var progressBar: ProgressBar
 
     private val MAIN_URL = "https://tinyurl.com/n8bookapp"
-    private val BANNER_AD_URL = "https://nightbooksapp.blogspot.com/p/app-banner-ads.html"
-    private val INTERSTITIAL_AD_URL = "https://nightbooksapp.blogspot.com/p/app-interstitial.html"
+
+    // ========== TOP BANNER AD ==========
+    private val TOP_AD_HTML = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+          html, body { margin:0; padding:0; background:#000; 
+                       display:flex; align-items:center; 
+                       justify-content:center; height:100%; overflow:hidden; }
+          a { display:block; }
+          img { display:block; max-width:100%; height:auto; }
+        </style>
+        </head>
+        <body>
+          <a href="https://www.profitableratecpmnetwork.com/aexkjesxzq?key=6a59cd288decee02c8d8ee3d6ddfc2f8" target="_blank">
+            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgk-nD8HrRJK_vQa1vjfw8KPVmPlV3EOeA1FOXbIF_HQUFp5bPNSqbPQNIJw5MJrvp_QL9as_j3BPb8HSfXwrHFSPB3lFCPtxR6IEeCvrZ68NsmX1ijkkU2xj4_c1mSohQUFy8zr3pqSUEXfBu5JvU8aL1Mkohm8gZpn3JIuTIamtIL3w-3GPgJquFhsxp-/s1600/Banner%20Ad%20300%2050.gif" 
+                 width="300" height="50" alt="ad" />
+          </a>
+        </body>
+        </html>
+    """.trimIndent()
+
+    // ========== BOTTOM BANNER AD ==========
+    private val BOTTOM_AD_HTML = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+          html, body { margin:0; padding:0; background:#000; 
+                       display:flex; align-items:center; 
+                       justify-content:center; height:100%; overflow:hidden; }
+          a { display:block; }
+          img { display:block; max-width:100%; height:auto; }
+        </style>
+        </head>
+        <body>
+          <a href="https://www.profitableratecpmnetwork.com/aexkjesxzq?key=6a59cd288decee02c8d8ee3d6ddfc2f8" target="_blank">
+            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj7fR8sun1WYeOeffivsF7IKOblivp6h6RCzkzoMlh-V4soFtdW5mSX9f7NloQOa8mnkQb0zNZCWsvkzDmDvKzjzJRkhpRAOGJeRylocNAoqCJ4kXobDTr2M1SM1bSCbdQL06t6cNkJ_cL6SOPRLaMjD85JFx8gPFLBoY5jT_raNeDx58PLM-XhpIvkFXU/s16000/Chat%20with%20Hot%20Girl.gif" 
+                 width="300" alt="ad" />
+          </a>
+        </body>
+        </html>
+    """.trimIndent()
+
+    // ========== INTERSTITIAL AD ==========
+    private val INTERSTITIAL_AD_HTML = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+          html, body { margin:0; padding:0; background:#000; 
+                       display:flex; align-items:center; 
+                       justify-content:center; height:100%; overflow:hidden; }
+          a { display:block; text-align:center; }
+          img { display:block; max-width:100%; height:auto; margin:0 auto; }
+        </style>
+        </head>
+        <body>
+          <a href="https://www.profitableratecpmnetwork.com/aexkjesxzq?key=6a59cd288decee02c8d8ee3d6ddfc2f8" target="_blank">
+            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgk-nD8HrRJK_vQa1vjfw8KPVmPlV3EOeA1FOXbIF_HQUFp5bPNSqbPQNIJw5MJrvp_QL9as_j3BPb8HSfXwrHFSPB3lFCPtxR6IEeCvrZ68NsmX1ijkkU2xj4_c1mSohQUFy8zr3pqSUEXfBu5JvU8aL1Mkohm8gZpn3JIuTIamtIL3w-3GPgJquFhsxp-/s1600/Banner%20Ad%20300%2050.gif" 
+                 width="300" alt="ad" />
+          </a>
+        </body>
+        </html>
+    """.trimIndent()
 
     private var interstitialTimer: Timer? = null
 
@@ -127,34 +194,47 @@ class MainActivity : AppCompatActivity() {
 
     @SuppressLint("SetJavaScriptEnabled")
     private fun setupAds() {
-        // Top and Bottom banners - both load the same Blogger URL
-        listOf(topAdWebView, bottomAdWebView).forEach { wv ->
-            wv.settings.javaScriptEnabled = true
-            wv.settings.domStorageEnabled = true
-            wv.settings.loadsImagesAutomatically = true
-            wv.settings.blockNetworkImage = false
-            wv.settings.cacheMode = WebSettings.LOAD_NO_CACHE
-            wv.settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
-            wv.settings.mediaPlaybackRequiresUserGesture = false
-            wv.settings.userAgentString = wv.settings.userAgentString + " BooksLabApp/1.0"
-            wv.setBackgroundColor(Color.BLACK)
-            
-            // Accept third party cookies for ads
-            CookieManager.getInstance().setAcceptThirdPartyCookies(wv, true)
-            
-            wv.webViewClient = object : WebViewClient() {
-                override fun shouldOverrideUrlLoading(
-                    view: WebView?,
-                    request: WebResourceRequest?
-                ): Boolean {
-                    view?.loadUrl(request?.url.toString())
-                    return true
+        setupAdWebView(topAdWebView, TOP_AD_HTML)
+        setupAdWebView(bottomAdWebView, BOTTOM_AD_HTML)
+    }
+
+    @SuppressLint("SetJavaScriptEnabled")
+    private fun setupAdWebView(wv: WebView, html: String) {
+        wv.settings.javaScriptEnabled = true
+        wv.settings.domStorageEnabled = true
+        wv.settings.loadsImagesAutomatically = true
+        wv.settings.blockNetworkImage = false
+        wv.settings.cacheMode = WebSettings.LOAD_DEFAULT
+        wv.settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+        wv.setBackgroundColor(Color.BLACK)
+
+        CookieManager.getInstance().setAcceptThirdPartyCookies(wv, true)
+
+        wv.webViewClient = object : WebViewClient() {
+            override fun shouldOverrideUrlLoading(
+                view: WebView?,
+                request: WebResourceRequest?
+            ): Boolean {
+                try {
+                    val intent = android.content.Intent(
+                        android.content.Intent.ACTION_VIEW,
+                        request?.url
+                    )
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    // ignore
                 }
+                return true
             }
-            
-            // Load from Blogger URL (uses referer automatically)
-            wv.loadUrl(BANNER_AD_URL)
         }
+
+        wv.loadDataWithBaseURL(
+            "https://nightbooksapp.blogspot.com/",
+            html,
+            "text/html",
+            "UTF-8",
+            null
+        )
     }
 
     private fun setupSwipeRefresh() {
@@ -176,7 +256,7 @@ class MainActivity : AppCompatActivity() {
             override fun run() {
                 runOnUiThread { showInterstitialAd() }
             }
-        }, 180000, 180000) // 3 minutes
+        }, 180000, 180000)
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -190,15 +270,37 @@ class MainActivity : AppCompatActivity() {
         wv.settings.domStorageEnabled = true
         wv.settings.loadsImagesAutomatically = true
         wv.settings.blockNetworkImage = false
-        wv.settings.cacheMode = WebSettings.LOAD_NO_CACHE
+        wv.settings.cacheMode = WebSettings.LOAD_DEFAULT
         wv.settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
-        wv.settings.mediaPlaybackRequiresUserGesture = false
-        wv.settings.userAgentString = wv.settings.userAgentString + " BooksLabApp/1.0"
         wv.setBackgroundColor(Color.BLACK)
-        
+
         CookieManager.getInstance().setAcceptThirdPartyCookies(wv, true)
-        
-        wv.loadUrl(INTERSTITIAL_AD_URL)
+
+        wv.webViewClient = object : WebViewClient() {
+            override fun shouldOverrideUrlLoading(
+                view: WebView?,
+                request: WebResourceRequest?
+            ): Boolean {
+                try {
+                    val intent = android.content.Intent(
+                        android.content.Intent.ACTION_VIEW,
+                        request?.url
+                    )
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    // ignore
+                }
+                return true
+            }
+        }
+
+        wv.loadDataWithBaseURL(
+            "https://nightbooksapp.blogspot.com/",
+            INTERSTITIAL_AD_HTML,
+            "text/html",
+            "UTF-8",
+            null
+        )
 
         dialog.setView(wv)
         dialog.show()
